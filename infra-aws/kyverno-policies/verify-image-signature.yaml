@@ -1,0 +1,28 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-image-signature
+  annotations:
+    policies.kyverno.io/description: >
+      Only allows images signed by the DevPath CI pipeline.
+      Unsigned images are blocked at admission.
+spec:
+  validationFailureAction: Audit
+  rules:
+    - name: verify-signature
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [dev]
+      verifyImages:
+        - imageReferences:
+            - "589802233850.dkr.ecr.eu-west-1.amazonaws.com/catalog-api-local-4:*"
+          mutateDigest: false
+          attestors:
+            - entries:
+                - keyless:
+                    subject: "https://github.com/doyindevops/catalog-api-local-4/.github/workflows/ci.yaml@refs/heads/main"
+                    issuer: "https://token.actions.githubusercontent.com"
+                    rekor:
+                      url: "https://rekor.sigstore.dev"

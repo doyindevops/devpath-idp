@@ -1,0 +1,22 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: block-latest-tag
+  annotations:
+    policies.kyverno.io/description: >
+      Blocks any pod using :latest image tag.
+      Forces explicit versioned tags for traceability.
+spec:
+  validationFailureAction: Enforce
+  rules:
+    - name: block-latest-tag
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      validate:
+        message: "Using :latest tag is not allowed. Use a versioned tag like :v1.0.0"
+        pattern:
+          spec:
+            containers:
+              - image: "!*:latest"
